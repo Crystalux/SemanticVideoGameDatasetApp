@@ -12,6 +12,8 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +25,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import javax.imageio.ImageIO;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -32,9 +35,18 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 
 
 public class GUI extends JFrame {
+	JTabbedPane tabbedPane;
+	BuildQuery buildQuery;
+	JPanel bodyPanel;
+	JPanel footerPanel;
+	JPanel countPanel;
+	JPanel gameInfo;
 	/**
 	 * Launch the application.
 	 */
@@ -65,7 +77,7 @@ public class GUI extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		// Tabbed panes for different queries
-		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane = new JTabbedPane();
 		JPanel homePanel = new JPanel();
 		JLabel homeLabel = new JLabel("Home");
 		homePanel.add(homeLabel);
@@ -80,10 +92,15 @@ public class GUI extends JFrame {
 		
 		JPanel qPanel = queryPanel();
 		
+		gameInfo = new JPanel();
+		JLabel infoLabel = new JLabel("Games selected will be viewed here");
+		gameInfo.add(infoLabel);
+		
 		tabbedPane.add("Home", homePanel);
 		tabbedPane.add("General Queries", qPanel);
 		tabbedPane.add("Search by Developer", devPanel);
 		tabbedPane.add("Search by Publisher", pubPanel);
+		tabbedPane.add("Game Details", gameInfo);
 		add(tabbedPane);
 		
 	}
@@ -103,7 +120,20 @@ public class GUI extends JFrame {
 				  return urlIcon;
 				 } 
 				 catch (Exception e) {
-				  e.printStackTrace();
+				  //e.printStackTrace();
+				  BufferedImage pimage = null;
+					try {
+					    pimage = ImageIO.read(new File("./src/main/resources/images/placeholder.png"));
+					    
+					    ImageIcon placeIcon = new ImageIcon(pimage);
+					    Image placeImage = placeIcon.getImage();
+					    Image modifiedImage = placeImage.getScaledInstance(200,300, java.awt.Image.SCALE_SMOOTH);
+						placeIcon = new ImageIcon(modifiedImage);
+						
+						return placeIcon;
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				 }
 
 		}else {
@@ -125,9 +155,88 @@ public class GUI extends JFrame {
 		return null;
 	}
 	
+	public ImageIcon scaledLogo(String imageURL) {
+		if (imageURL != "") {
+			try {
+				  URL url = new URL(imageURL);
+				  HttpURLConnection httpcon = (HttpURLConnection) url.openConnection(); 
+				  httpcon.addRequestProperty("User-Agent", ""); 
+				  BufferedImage image = ImageIO.read(httpcon.getInputStream());
+				  ImageIcon urlIcon = new ImageIcon(image);
+				  
+				  Image urlImage = urlIcon.getImage();
+				  Image modifiedImage = urlImage.getScaledInstance(200,150, java.awt.Image.SCALE_SMOOTH);
+				  urlIcon = new ImageIcon(modifiedImage);
+				  return urlIcon;
+				 } 
+				 catch (Exception e) {
+				  //e.printStackTrace();
+				  BufferedImage pimage = null;
+					try {
+					    pimage = ImageIO.read(new File("./src/main/resources/images/placeholder.png"));
+					    
+					    ImageIcon placeIcon = new ImageIcon(pimage);
+					    Image placeImage = placeIcon.getImage();
+					    Image modifiedImage = placeImage.getScaledInstance(200,150, java.awt.Image.SCALE_SMOOTH);
+						placeIcon = new ImageIcon(modifiedImage);
+						
+						return placeIcon;
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				 }
+
+		}else {
+			//place holder image
+			BufferedImage pimage = null;
+			try {
+			    pimage = ImageIO.read(new File("./src/main/resources/images/placeholder.png"));
+			    
+			    ImageIcon placeIcon = new ImageIcon(pimage);
+			    Image placeImage = placeIcon.getImage();
+			    Image modifiedImage = placeImage.getScaledInstance(200,300, java.awt.Image.SCALE_SMOOTH);
+				placeIcon = new ImageIcon(modifiedImage);
+				
+				return placeIcon;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	
+	public JPanel gameDetail(String title) {
+		JPanel details = new JPanel();
+		JPanel tablePanel = new JPanel();
+		JPanel coverPanel = new JPanel();
+		String[] info = new Queries().get_game_detail(title);
+		info[1] = info[1].substring(0,10);
+		String[] infolabels = {"Title", "Release Date", "Publisher", "Developer", "Platforms", "Age Rating", "Genres", "Themes", "Game Modes", "Player Perspective"};
+		JTable table = new JTable();
+		DefaultTableModel model = new DefaultTableModel(0,2);
+		table.setModel(model);
+		for(int i = 0;  i< infolabels.length; i++) {
+			model.addRow(new Object[] {infolabels[i], info[i]});
+		}
+		
+		TableColumnModel columnModel = table.getColumnModel();
+		columnModel.getColumn(0).setPreferredWidth(200);
+		columnModel.getColumn(1).setPreferredWidth(500);
+		tablePanel.add(table);
+		ImageIcon cover = scaledImage(info[info.length - 1]);
+		JLabel coverLabel = new JLabel(cover);
+		coverPanel.add(coverLabel);
+		details.add(tablePanel, BorderLayout.WEST);
+		details.add(coverPanel, BorderLayout.EAST);
+		return details;
+	}
+	
 	public JScrollPane gridGames(List<String[]> games) {
 		JPanel contentpanel = new JPanel();
-		contentpanel.setLayout(new GridLayout(3,4));
+		int cols = Math.min(4,  games.size());
+		int rows = Math.min((int)Math.ceil(games.size() / 4), 3);
+		contentpanel.setLayout(new GridLayout(rows,cols));
 
 		for(String[] detail : games) {
 			//overall panel for this game detail.
@@ -151,9 +260,15 @@ public class GUI extends JFrame {
 			detailpanel.add(pcover);
 			detailpanel.add(ptitle);
 			detailpanel.add(pdate);
-
+			detailpanel.addMouseListener(new MouseAdapter() {
+				public void mousePressed(MouseEvent me) {
+					gameInfo.removeAll();
+					gameInfo.add(gameDetail(detail[0]));
+					tabbedPane.setSelectedIndex(4);
+				}
+			});
 			contentpanel.add(detailpanel);
-			
+			contentpanel.setToolTipText(detail[0]);
 		}
 		
 		JScrollPane scrollpane = new JScrollPane(contentpanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -162,10 +277,88 @@ public class GUI extends JFrame {
 		
 		return scrollpane;
 	}
+	
+	public JPanel pagePanel(int i) {
+		JPanel pPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0,0));
+		int show= i+1;
+		JLabel pageno = new JLabel("Page " + show);
+		JButton first = new JButton("First");
+		first.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(buildQuery.pageNo != 0) {
+					buildQuery.pageNo = 0;
+					updateGames();
+				}
+			}
+			
+		});
+		JButton prev = new JButton("Prev");
+		prev.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (buildQuery.pageNo > 0) {
+					buildQuery.pageNo -=1;
+					updateGames();
+
+				}
+			}
+			
+		});
+		JButton next = new JButton("Next");
+		next.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(buildQuery.pageNo<buildQuery.lastPage) {
+					buildQuery.pageNo +=1;
+					updateGames();
+				}
+			}
+			
+		});
+		JButton last = new JButton("Last");
+		last.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(buildQuery.pageNo != buildQuery.lastPage) {
+					buildQuery.pageNo = buildQuery.lastPage;
+					updateGames();
+				}
+			}
+			
+		});
+		
+		
+		pPanel.add(first);
+		pPanel.add(prev);
+		pPanel.add(pageno);
+		pPanel.add(next);
+		pPanel.add(last);
+		
+		return pPanel;
+	}
+	
+	private void updateGames() {
+   		List<String[]> games = new Queries().get_qgames(buildQuery.selected_genre, buildQuery.selected_theme, buildQuery.selected_ppers, 
+   				buildQuery.selected_gmode, buildQuery.pageNo, buildQuery.selected_sort);
+   		System.out.println(games.size() + " games in games");
+   		JScrollPane gamePane = gridGames(games);
+   		bodyPanel.removeAll();
+   		bodyPanel.add(gamePane);
+   		
+   		footerPanel.removeAll();
+   		footerPanel.add(pagePanel(buildQuery.pageNo));
+	}
+	
 	public JPanel queryPanel() {
 		
 		JPanel contentPanel = new JPanel();
+		
 		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+		
+		bodyPanel = new JPanel();
+		bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
+		JLabel bodyLabel = new JLabel("This is a content label");
+		bodyPanel.add(bodyLabel);
+		footerPanel = new JPanel();
+		footerPanel.add(pagePanel(0));
+		
 		//Title Panel
 		JPanel titlepanel = new JPanel();
 		JLabel titleLabel = new JLabel("General video game queries");
@@ -201,55 +394,81 @@ public class GUI extends JFrame {
 		JComboBox<String>  gmode_dd = new JComboBox(gmode.toArray(new String[gmode.size()]));
 		search_panel.add(gmode_dd);
 		
+		JPanel sortPanel = new JPanel();
+		JComboBox<String> selectSort = new JComboBox<String>();
+		selectSort.addItem("Release Date Descending");
+		selectSort.addItem("Release Date Ascending");
+		selectSort.addItem("Alphabetical Ascending");
+		selectSort.addItem("Alphabetical Descending");
+		sortPanel.add(selectSort);
+		
 		//Search button
 		JPanel btn_panel = new JPanel();
 		JButton search_button = new JButton("Search");
 		search_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				String selected_genre = genre_dd.getSelectedItem().toString();
-				String selected_theme = theme_dd.getSelectedItem().toString();
-				String selected_pers = ppers_dd.getSelectedItem().toString();
-				String selected_mode = gmode_dd.getSelectedItem().toString();
-
-		   		System.out.print("Button Clicked"+ selected_genre);
-		   		List<String[]> games = new Queries().get_qgames(selected_genre, selected_theme, selected_pers, selected_mode);
-		   		
-		   		JScrollPane gamePane = gridGames(games);
-		   		contentPanel.add(gamePane);
-
+				
+				buildQuery = new BuildQuery();
+				buildQuery.selected_genre = genre_dd.getSelectedItem().toString();
+				buildQuery.selected_theme = theme_dd.getSelectedItem().toString();
+				buildQuery.selected_ppers = ppers_dd.getSelectedItem().toString();
+				buildQuery.selected_gmode = gmode_dd.getSelectedItem().toString();
+				buildQuery.selected_sort = selectSort.getSelectedItem().toString();
+				buildQuery.pageNo=0;
+				
+				int count  = new Queries().count_qGames(buildQuery.selected_genre, buildQuery.selected_theme, buildQuery.selected_ppers, buildQuery.selected_gmode);
+				countPanel.removeAll();
+				JLabel countLabel = new JLabel(count + " games found");
+				countPanel.add(countLabel);
+				buildQuery.lastPage = Math.floorDiv(count -1, 12);
+				updateGames();
+				
 			}
 			
 		});
 		btn_panel.add(search_button);
 		
+		// Sort Panel
+
 
 		//header Panel
 		JPanel headerPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
+		
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 0.5;
-		c.gridx = 1;
+		c.weightx = 1.0;
+		c.weighty = 0.33;
+		c.gridwidth = 2;
+		c.gridx = 0;
 		c.gridy = 0;
 		headerPanel.add(titlepanel, c);
+		
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 0.0;
-		c.gridwidth = 3;
+		c.gridwidth = 2;
 		c.gridx = 0;
 		c.gridy = 1;
 		headerPanel.add(search_panel,c);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weighty = 1.0;   //request any extra vertical space
-		c.anchor = GridBagConstraints.PAGE_END; //bottom of space
-		c.insets = new Insets(10,0,0,0);  //top padding
+		
+		c.fill = GridBagConstraints.WEST;
+		c.gridx = 0;       //aligned with button 2
+		c.gridwidth = 1;   //1 columns wide
+		c.gridy = 2;       //third row
+		headerPanel.add(sortPanel, c);
+		
+		c.fill = GridBagConstraints.EAST;
 		c.gridx = 1;       //aligned with button 2
-		c.gridwidth = 2;   //2 columns wide
+		c.gridwidth = 1;   //2 columns wide
 		c.gridy = 2;       //third row
 		headerPanel.add(btn_panel, c);
 		
 		//Content Panel
 
+		
 		contentPanel.add(headerPanel);
+		countPanel = new JPanel();
+		contentPanel.add(countPanel);
+		contentPanel.add(bodyPanel);
+		contentPanel.add(footerPanel);
 		return contentPanel;
 	}
 	

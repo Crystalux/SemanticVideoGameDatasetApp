@@ -1,9 +1,7 @@
 package game;
 
-import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.jena.ontology.OntModel;
@@ -184,9 +182,129 @@ public class Queries {
     	return gmode;
 	}
 	
-    public List<String[]> get_qgames(String genre, String theme, String pers, String mode) {
+	public String[] get_game_detail(String title) {
     	String prefix = "prefix game: <" + GAME_NS + ">\n"+
     			        "prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+    	
+    	String release_date = "OPTIONAL{ ?game game:release_date ?release_date}";
+    	String publisher = "OPTIONAL{ ?game game:publishedBy|^game:published ?pub. \r\n"
+    			+ "     ?pub game:name ?publisher} \r\n";
+    	String developer = "OPTIONAL{ ?game game:developedBy|^game:developed ?dev. \r\n"
+    			+ "     ?dev game:name ?developer} \r\n";
+    	String platform = "OPTIONAL{ ?game game:availableOn ?plat.\r\n"
+    			+ "          ?plat game:name ?platform.} \r\n";
+    	String ageRating = "OPTIONAL{ ?p rdfs:subPropertyOf game:hasAgeRating.\r\n"
+    			+ "    	     ?game ?p ?age. \r\n"
+    			+ "          ?age game:name ?ageRate.} \r\n";
+    	String genres="OPTIONAL{ ?game game:hasGenre ?gen. \r\n"
+    			+ "          ?gen game:name ?genre.} \r\n";
+    	String themes="OPTIONAL{ ?game game:hasTheme ?the. \r\n"
+    			+ "          ?the game:name ?theme.} \r\n";
+    	String gameModes="OPTIONAL{ ?game game:hasGameMode ?mode. \r\n"
+    			+ "          ?mode game:name ?gmode.} \r\n";
+    	String ppers="OPTIONAL{ ?game game:hasPlayerPerspective ?pper. \r\n"
+    			+ "          ?pper game:name ?ppers.} \r\n";
+    	String cover = "OPTIONAL{?game game:cover ?cover} \r\n";
+    	String filter = "FILTER(STR(?title) = \""+title+"\" )";
+    	
+    	String query_text1=  prefix +
+    			"SELECT ?title \r\n"  
+    			+ "(GROUP_CONCAT(DISTINCT(?platform); SEPARATOR=', ') AS ?platforms) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?ageRate); SEPARATOR=', ') AS ?ageRating) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?genre); SEPARATOR=', ') AS ?genres) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?theme); SEPARATOR=', ') AS ?themes) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?gmode); SEPARATOR=', ') AS ?gameModes) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?ppers); SEPARATOR=', ') AS ?playerPerspectives) \r\n"
+    	    	+ "WHERE { \r\n"
+    	    	+"	?game a game:video_game. \r\n"
+    	    	+"	?game game:title ?title. \r\n"
+    	    	+ platform
+    	    	+ ageRating
+    	    	+ genres
+    	    	+ themes
+    	    	+ gameModes
+    	    	+ ppers
+    	    	+ filter
+    	    	+"} \r\n"
+    	    	+"GROUP BY ?title";
+    	String query_text2=  prefix +
+    			"SELECT ?title ?release_date ?publisher ?developer ?cover \r\n"
+    	    	+ "WHERE { \r\n"
+    	    	+"	?game a game:video_game. \r\n"
+    	    	+"	?game game:title ?title. \r\n"
+    	    	+ release_date
+    	    	+ publisher
+    	    	+ developer
+    	    	+ cover
+    	    	+ filter
+    	    	+"} \r\n";
+    	
+    	
+    	ArrayList<String> games = new ArrayList<String>();
+    	System.out.println(query_text1);
+    	Query query1 = QueryFactory.create( query_text1);
+    	QueryExecution qexec1 = QueryExecutionFactory.create( query1, m );
+    	
+    	//List<String> genres = new ArrayList<String>();
+    	
+
+    	
+    	    	        
+        try {
+    	      ResultSet results = qexec1.execSelect();
+    	      while ( results.hasNext() ) {
+    	           QuerySolution qs = results.next();
+    	           
+                   String[] list1 = {qs.get("title").toString(),get_if_exists(qs,"platforms"), get_if_exists(qs,"ageRating"), get_if_exists(qs,"genres"), 
+                		   get_if_exists(qs,"themes"), get_if_exists(qs,"gameModes"),get_if_exists(qs,"playerPerspectives")};
+                   
+                   games.addAll(Arrays.asList(list1));
+                   System.out.println(qs.get("title").toString());
+    	       }
+    	          
+    	}
+    	catch(NullPointerException e) {
+    	        	
+    	}
+    	finally {
+               qexec1.close();
+        }
+
+    	System.out.println(query_text2);
+    	Query query2 = QueryFactory.create( query_text2);
+    	QueryExecution qexec2 = QueryExecutionFactory.create( query2, m );
+    	
+        try {
+  	      ResultSet results = qexec2.execSelect();
+  	      while ( results.hasNext() ) {
+  	           QuerySolution qs = results.next();
+  	           String[] list2 = {qs.get("title").toString(),get_if_exists(qs,"release_date"), get_if_exists(qs,"publisher"), get_if_exists(qs,"developer"), get_if_exists(qs,"cover")};
+  	           String[] slice1 = Arrays.copyOfRange(list2, 1,4);
+  	           String[] slice2 = Arrays.copyOfRange(list2, 4,5);
+  	           games.addAll(1, Arrays.asList(slice1));
+  	           games.addAll(Arrays.asList(slice2));
+
+               System.out.println(qs.get("cover").toString());
+  	       }
+  	          
+        }
+        catch(NullPointerException e) {
+  	        	
+        }
+        finally {
+             qexec2.close();
+        }
+        
+        String[] game = games.stream().toArray(String[]::new);
+    	return game;
+    	        
+    }
+
+	
+    public List<String[]> get_qgames(String genre, String theme, String pers, String mode, int pageno, String sort) {
+    	String prefix = "prefix game: <" + GAME_NS + ">\n"+
+    			        "prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+    	
     	String select_genre = (genre == "-- Select genre --")? "":"?game game:hasGenre ?genre. \r\n "
     			        	+"?genre game:name '" +genre+ "'. \r\n";   		
     	String select_theme = (theme == "-- Select theme --")? "":"?game game:hasTheme ?theme. \r\n "
@@ -194,7 +312,23 @@ public class Queries {
     	String select_pers = (pers == "-- Select player perspective --")? "":"?game game:hasPlayerPerspective ?ppers. \r\n "
 	        	+"?ppers game:name '" +pers+ "'. \r\n";   	
     	String select_mode = (mode == "-- Select game mode --")? "":"?game game:hasGameMode ?gmode. \r\n "
-	        	+"?gmode game:name '" +mode+ "'. \r\n";   	
+	        	+"?gmode game:name '" +mode+ "'. \r\n";
+    	
+    	String orderBy;
+    	if(sort == "Release Date Descending") {
+    		orderBy = "DESC(?release_date)";
+    	} else if(sort == "Release Date Ascending"){
+    		orderBy = "ASC(?release_date)";
+    	} else if(sort == "Alphabetical Ascending") {
+    		orderBy = "ASC(?title)";
+    	} else {
+    		orderBy = "DESC(?title)";
+    	}
+  
+    	int offset = pageno * 12;
+    	
+    	
+    	
     	String query_text=  prefix +
     			"SELECT ?title ?cover ?release_date \r\n"  
     	    	+ "WHERE { \r\n"
@@ -209,11 +343,11 @@ public class Queries {
     	    	+ select_genre
     	    	+ select_theme
     	    	+ select_pers
-    	    	+ select_mode 
+    	    	+ select_mode
     	    	+"} \r\n"
-    	    	+"ORDER BY DESC(?release_date) \r\n" 
+    	    	+"ORDER BY " + orderBy + " \r\n" 
     	    	+"LIMIT 12 \r\n"
-    	    	+"OFFSET 1";
+    	    	+"OFFSET " + offset;
     	
     			
     	System.out.println(query_text);
@@ -243,6 +377,67 @@ public class Queries {
         } 
     	        
     	return games;
+    	        
+    }
+    
+    public int count_qGames(String genre, String theme, String pers, String mode) {
+    	String prefix = "prefix game: <" + GAME_NS + ">\n"+
+    			        "prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+    	
+    	String select_genre = (genre == "-- Select genre --")? "":"?game game:hasGenre ?genre. \r\n "
+    			        	+"?genre game:name '" +genre+ "'. \r\n";   		
+    	String select_theme = (theme == "-- Select theme --")? "":"?game game:hasTheme ?theme. \r\n "
+	        	+"?theme game:name '" +theme+ "'. \r\n";   	
+    	String select_pers = (pers == "-- Select player perspective --")? "":"?game game:hasPlayerPerspective ?ppers. \r\n "
+	        	+"?ppers game:name '" +pers+ "'. \r\n";   	
+    	String select_mode = (mode == "-- Select game mode --")? "":"?game game:hasGameMode ?gmode. \r\n "
+	        	+"?gmode game:name '" +mode+ "'. \r\n";
+ 
+    	
+    	String query_text=  prefix +
+    			"SELECT (COUNT (?game) as ?total_games) \r\n"  
+    	    	+ "WHERE { \r\n"
+    	    	+"	?game a game:video_game. \r\n"
+    	    	+ select_genre
+    	    	+ select_theme
+    	    	+ select_pers
+    	    	+ select_mode
+    	    	+"} \r\n";
+    	
+    			
+    	System.out.println(query_text);
+    			
+    	Query query = QueryFactory.create( query_text );
+    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
+    	       
+    	//List<String> genres = new ArrayList<String>();
+    	int count = 0;
+    	
+    	    	        
+        try {
+    	      ResultSet results = qexec.execSelect();
+    	      while ( results.hasNext() ) {
+    	           QuerySolution qs = results.next();
+
+                   String strCount = qs.get("total_games").toString();
+                   String[] parts = strCount.split("\\^\\^");
+                   count = Integer.parseInt(parts[0]);
+                   
+                   System.out.println(count + " games founded");
+
+    	      }
+
+	           
+    	          
+    	}
+    	catch(NullPointerException e) {
+    	        	
+    	}
+    	finally {
+               qexec.close();
+        } 
+    	        
+    	return count;
     	        
     }
 
