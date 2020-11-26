@@ -144,6 +144,98 @@ public class Queries {
     	return ppers;
 	}
 	
+	public List<String[]> get_publisher(String publisher, String sort){
+		String prefix = "prefix game: <" + GAME_NS + ">\n"+
+        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+
+    	String orderBy;
+    	if(sort == "Alphabetical Ascending") {
+    		orderBy = "ASC(?publisher)";
+    	} else if(sort == "Alphabetical Descending"){
+    		orderBy = "DESC(?publisher)";
+    	} else {
+    		orderBy = "DESC(?gameCount)";
+    	}
+    	
+    	String query_text=  prefix +
+    			"SELECT ?publisher (COUNT(?game)AS?gameCount) \r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		    ?pub a game:publisher. \r\n"
+    			+ "		    ?pub game:name ?publisher. \r\n"
+    			+"          OPTIONAL{?pub game:published ?game.} \r\n"
+    			+ "		    FILTER(REGEX(?publisher, \""+publisher+"\", \"i\")) \r\n"
+    			+ "} \r\n"
+    			+ "GROUP BY ?publisher \r\n"
+    			+ "ORDER BY "+ orderBy+"\r\n";
+    	
+    	System.out.println(query_text);
+    	
+    	Query query = QueryFactory.create( query_text );
+    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
+    	
+    	List<String[]> pub = new ArrayList<String[]>();
+    	
+    	try {
+    		
+    		ResultSet results = qexec.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+    			pub.add(new String[]{qs.get("publisher").toString(), qs.get("gameCount").toString()});
+    			System.out.println(qs.get("publisher").toString());
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec.close();
+    	} 
+    	return pub;
+	}
+	
+	public int count_publisher(String publisher){
+		String prefix = "prefix game: <" + GAME_NS + ">\n"+
+        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+		
+    	String query_text=  prefix +
+    			"SELECT (COUNT(?pub) AS ?total_pub) \r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		    ?pub a game:publisher. \r\n"
+    			+ "		    ?pub game:name ?publisher. \r\n"
+    			+ "		    FILTER(REGEX(?publisher, \""+publisher+"\", \"i\")) \r\n"
+    			+ "} \r\n";
+ 
+    	
+    	System.out.println(query_text);
+    	
+    	Query query = QueryFactory.create( query_text );
+    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
+    	
+    	
+    	int count=0;
+    	try {
+    		
+    		ResultSet results = qexec.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+
+                String strCount = qs.get("total_pub").toString();
+                String[] parts = strCount.split("\\^\\^");
+                count = Integer.parseInt(parts[0]);
+                
+                System.out.println(count + " pubilshers found");
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec.close();
+    	}
+    	return count;
+	}
+	
+	
 	public List<String> get_gmode(){
 		String prefix = "prefix game: <" + GAME_NS + ">\n"+
         		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;

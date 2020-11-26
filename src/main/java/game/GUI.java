@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.Vector;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -36,6 +37,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
@@ -85,13 +88,9 @@ public class GUI extends JFrame {
 		JPanel devPanel = new JPanel();
 		JLabel devLabel = new JLabel("Search Video Games By Publisher");
 		devPanel.add(devLabel);
-	
-		JPanel pubPanel = new JPanel();
-		JLabel pubLabel = new JLabel("Search Video Games By Publisher");
-		pubPanel.add(pubLabel);
 		
 		JPanel qPanel = queryPanel();
-		
+		JPanel pubPanel = publisherPanel();
 		gameInfo = new JPanel();
 		JLabel infoLabel = new JLabel("Games selected will be viewed here");
 		gameInfo.add(infoLabel);
@@ -204,6 +203,7 @@ public class GUI extends JFrame {
 		}
 		return null;
 	}
+
 
 	
 	public JPanel gameDetail(String title) {
@@ -346,6 +346,7 @@ public class GUI extends JFrame {
    		footerPanel.add(pagePanel(buildQuery.pageNo));
 	}
 	
+
 	public JPanel queryPanel() {
 		
 		JPanel contentPanel = new JPanel();
@@ -472,7 +473,107 @@ public class GUI extends JFrame {
 		return contentPanel;
 	}
 	
-	
+	public JPanel publisherPanel() {
+		JPanel contentPanel = new JPanel();
+		contentPanel.setLayout(new BorderLayout());
+		JPanel header = new JPanel(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+
+		
+		JPanel body = new JPanel();
+		countPanel = new JPanel();
+		JPanel footer = new JPanel();
+		
+
+		contentPanel.add(header, BorderLayout.NORTH);
+		contentPanel.add(body, BorderLayout.CENTER);
+		contentPanel.add(footer, BorderLayout.SOUTH);
+		
+		JPanel titlePanel = new JPanel();
+		JLabel titleText = new JLabel("Search games by publisher");
+		titlePanel.add(titleText);
+		
+		JPanel searchPanel = new JPanel();
+		searchPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		
+		JPanel textPanel =new JPanel();
+		JTextField textField = new JTextField();
+		textField.setColumns(20);
+		textField.setText("Enter a publisher name");
+		textPanel.add(textField);
+		
+		JPanel sortPanel = new JPanel();
+		JComboBox<String> selectSort = new JComboBox<String>();
+		selectSort.addItem("Alphabetical Ascending");
+		selectSort.addItem("Alphabetical Descending");
+		selectSort.addItem("Games Released");
+		sortPanel.add(selectSort);
+		
+		JPanel buttonPanel = new JPanel();
+		JButton searchButton = new JButton("Search");
+		searchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String pubName = textField.getText();
+				String pubSort = selectSort.getSelectedItem().toString();
+				
+				int count = new Queries().count_publisher(pubName);
+				String[] header = {count+" publisher(s) found"};
+				
+				List<String[]> publishers =  new Queries().get_publisher(pubName, pubSort);
+				JPanel publisherList = new JPanel();
+				publisherList.setLayout(new BorderLayout());
+				JTable table = new JTable();
+				DefaultTableModel model = new DefaultTableModel(header,0) {
+					   /**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					   public boolean isCellEditable(int row, int col) {       
+					       return false; // or a condition at your choice with row and column
+					   }
+				};
+				table.setModel(model);
+				
+				
+				for(String[] publisher : publishers) {
+					model.addRow(new Object[] {publisher[0]});
+				}
+
+				TableColumnModel columnModel = table.getColumnModel();
+				columnModel.getColumn(0).setPreferredWidth(500);
+				
+				JScrollPane tableContainer = new JScrollPane(table);
+				
+				publisherList.add(tableContainer, BorderLayout.CENTER);
+				body.removeAll();
+				body.add(publisherList);
+			}
+			
+		});
+		buttonPanel.add(searchButton);
+		
+		searchPanel.add(textPanel);
+		searchPanel.add(sortPanel);
+		searchPanel.add(buttonPanel);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 1.0;
+		c.weighty = 0.33;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 0;
+		header.add(titlePanel, c);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 1;
+		header.add(searchPanel, c);
+		
+		
+		return contentPanel;
+	}
 
 	
 }

@@ -8,4 +8,5 @@ public class BuildQuery {
 	public String selected_sort;
 	public int pageNo;
 	public int lastPage;
+	public String publisher;
 }
