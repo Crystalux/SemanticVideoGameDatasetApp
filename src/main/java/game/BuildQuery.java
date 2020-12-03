@@ -9,4 +9,5 @@ public class BuildQuery {
 	public int pageNo;
 	public int lastPage;
 	public String publisher;
+	public String developer;
 }

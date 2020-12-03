@@ -144,97 +144,7 @@ public class Queries {
     	return ppers;
 	}
 	
-	public List<String[]> get_publisher(String publisher, String sort){
-		String prefix = "prefix game: <" + GAME_NS + ">\n"+
-        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
 
-    	String orderBy;
-    	if(sort == "Alphabetical Ascending") {
-    		orderBy = "ASC(?publisher)";
-    	} else if(sort == "Alphabetical Descending"){
-    		orderBy = "DESC(?publisher)";
-    	} else {
-    		orderBy = "DESC(?gameCount)";
-    	}
-    	
-    	String query_text=  prefix +
-    			"SELECT ?publisher (COUNT(?game)AS?gameCount) \r\n"
-    			+ "WHERE{ \r\n"
-    			+ "		    ?pub a game:publisher. \r\n"
-    			+ "		    ?pub game:name ?publisher. \r\n"
-    			+"          OPTIONAL{?pub game:published ?game.} \r\n"
-    			+ "		    FILTER(REGEX(?publisher, \""+publisher+"\", \"i\")) \r\n"
-    			+ "} \r\n"
-    			+ "GROUP BY ?publisher \r\n"
-    			+ "ORDER BY "+ orderBy+"\r\n";
-    	
-    	System.out.println(query_text);
-    	
-    	Query query = QueryFactory.create( query_text );
-    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
-    	
-    	List<String[]> pub = new ArrayList<String[]>();
-    	
-    	try {
-    		
-    		ResultSet results = qexec.execSelect();
-    		while ( results.hasNext() ) {
-    			QuerySolution qs = results.next();
-    			pub.add(new String[]{qs.get("publisher").toString(), qs.get("gameCount").toString()});
-    			System.out.println(qs.get("publisher").toString());
-    		}
-    	}
-    	catch(NullPointerException e) {
-    		
-    	}
-    	finally {
-    		qexec.close();
-    	} 
-    	return pub;
-	}
-	
-	public int count_publisher(String publisher){
-		String prefix = "prefix game: <" + GAME_NS + ">\n"+
-        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
-		
-    	String query_text=  prefix +
-    			"SELECT (COUNT(?pub) AS ?total_pub) \r\n"
-    			+ "WHERE{ \r\n"
-    			+ "		    ?pub a game:publisher. \r\n"
-    			+ "		    ?pub game:name ?publisher. \r\n"
-    			+ "		    FILTER(REGEX(?publisher, \""+publisher+"\", \"i\")) \r\n"
-    			+ "} \r\n";
- 
-    	
-    	System.out.println(query_text);
-    	
-    	Query query = QueryFactory.create( query_text );
-    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
-    	
-    	
-    	int count=0;
-    	try {
-    		
-    		ResultSet results = qexec.execSelect();
-    		while ( results.hasNext() ) {
-    			QuerySolution qs = results.next();
-
-                String strCount = qs.get("total_pub").toString();
-                String[] parts = strCount.split("\\^\\^");
-                count = Integer.parseInt(parts[0]);
-                
-                System.out.println(count + " pubilshers found");
-    		}
-    	}
-    	catch(NullPointerException e) {
-    		
-    	}
-    	finally {
-    		qexec.close();
-    	}
-    	return count;
-	}
-	
 	
 	public List<String> get_gmode(){
 		String prefix = "prefix game: <" + GAME_NS + ">\n"+
@@ -393,7 +303,7 @@ public class Queries {
     }
 
 	
-    public List<String[]> get_qgames(String genre, String theme, String pers, String mode, int pageno, String sort) {
+    public List<String[]> get_qgames(String genre, String theme, String pers, String mode, String publisher, String developer, int pageno, String sort) {
     	String prefix = "prefix game: <" + GAME_NS + ">\n"+
     			        "prefix rdfs: <" + RDFS.getURI() + ">\n" ;
     	
@@ -405,6 +315,10 @@ public class Queries {
 	        	+"?ppers game:name '" +pers+ "'. \r\n";   	
     	String select_mode = (mode == "-- Select game mode --")? "":"?game game:hasGameMode ?gmode. \r\n "
 	        	+"?gmode game:name '" +mode+ "'. \r\n";
+    	String select_publisher = (publisher == "")? "":"  ?game game:publishedBy|^game:published ?pub.\r\n"
+    			+ "  ?pub game:name \""+publisher+"\"\r\n";
+    	String select_developer = (developer == "")? "":"  ?game game:developedBy|^game:developed ?dev.\n"
+    			+ "  ?dev game:name \""+developer+"\"\r\n";
     	
     	String orderBy;
     	if(sort == "Release Date Descending") {
@@ -436,6 +350,8 @@ public class Queries {
     	    	+ select_theme
     	    	+ select_pers
     	    	+ select_mode
+    	    	+ select_developer
+    	    	+ select_publisher
     	    	+"} \r\n"
     	    	+"ORDER BY " + orderBy + " \r\n" 
     	    	+"LIMIT 12 \r\n"
@@ -518,8 +434,6 @@ public class Queries {
                    System.out.println(count + " games founded");
 
     	      }
-
-	           
     	          
     	}
     	catch(NullPointerException e) {
@@ -532,5 +446,212 @@ public class Queries {
     	return count;
     	        
     }
+	
+	
+	public List<String[]> get_company(String company, String devpub, String sort){
+		String prefix = "prefix game: <" + GAME_NS + ">\n"+
+        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+
+    	String orderBy;
+    	if(sort == "Alphabetical Ascending") {
+    		orderBy = "ASC(?publisher)";
+    	} else if(sort == "Alphabetical Descending"){
+    		orderBy = "DESC(?publisher)";
+    	} else {
+    		orderBy = "DESC(?gameCount)";
+    	}
+    	
+    	String rdfClass;
+    	String rdfProperty;
+    	if(devpub == "pub") {
+    		rdfClass="publisher";
+    		rdfProperty="published";
+    	}else {
+    		rdfClass = "developer";
+    		rdfProperty="developed";
+    	}
+    	
+    	
+    	
+    	String query_text=  prefix +
+    			"SELECT ?company (COUNT(?game)AS?gameCount) \r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		    ?com a game:"+rdfClass+". \r\n"
+    			+ "		    ?com game:name ?company. \r\n"
+    			+"          OPTIONAL{?com game:"+rdfProperty+" ?game.} \r\n"
+    			+ "		    FILTER(REGEX(?company, \""+company+"\", \"i\")) \r\n"
+    			+ "} \r\n"
+    			+ "GROUP BY ?company \r\n"
+    			+ "ORDER BY "+ orderBy+"\r\n";
+    	
+    	System.out.println(query_text);
+    	
+    	Query query = QueryFactory.create( query_text );
+    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
+    	
+    	List<String[]> com = new ArrayList<String[]>();
+    	
+    	try {
+    		
+    		ResultSet results = qexec.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+    			com.add(new String[]{qs.get("company").toString(), qs.get("gameCount").toString()});
+    			System.out.println(qs.get("company").toString());
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec.close();
+    	} 
+    	return com;
+	}
+
+	
+	public int count_company(String company, String devpub){
+		String prefix = "prefix game: <" + GAME_NS + ">\n"+
+        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+		
+		String rdfClass;
+    	if(devpub == "pub") {
+    		rdfClass="publisher";
+    	}else {
+    		rdfClass = "developer";
+    	}
+
+
+    	String query_text=  prefix +
+    			"SELECT (COUNT(?com) AS ?total_com) \r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		    ?com a game:"+rdfClass+". \r\n"
+    			+ "		    ?com game:name ?company. \r\n"
+    			+ "		    FILTER(REGEX(?company, \""+company+"\", \"i\")) \r\n"
+    			+ "} \r\n";
+ 
+    	
+    	System.out.println(query_text);
+    	
+    	Query query = QueryFactory.create( query_text );
+    	QueryExecution qexec = QueryExecutionFactory.create( query, m );
+    	
+    	
+    	int count=0;
+    	try {
+    		
+    		ResultSet results = qexec.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+
+                String strCount = qs.get("total_com").toString();
+                String[] parts = strCount.split("\\^\\^");
+                count = Integer.parseInt(parts[0]);
+                
+                System.out.println(count + rdfClass + " found");
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec.close();
+    	}
+    	return count;
+	}
+    
+    public String[] get_company_detail(String company, String devpub){
+		String prefix = "prefix game: <" + GAME_NS + ">\n"+
+        		"prefix rdfs: <" + RDFS.getURI() + ">\n" ;
+		
+    	String rdfClass;
+    	String rdfProperty;
+    	if(devpub == "pub") {
+    		rdfClass="publisher";
+    		rdfProperty="published";
+    	}else {
+    		rdfClass = "developer";
+    		rdfProperty="developed";
+    	}
+    	
+    	String query_text1=  prefix +
+    			"SELECT ?company ?country ?foundingDate ?website ?logo\r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		    ?com a game:"+rdfClass+". \r\n"
+    			+ "		    ?com game:name ?company. \r\n"
+    			+ "			OPTIONAL{?com game:locatedIn ?loc. \r\n"
+    			+ "					 ?loc game:name ?country} \r\n"
+    			+ "			OPTIONAL{?com game:foundedOn ?foundingDate}\r\n"
+    			+ "			OPTIONAL{?com game:company_url ?website}\r\n"
+    			+ "			OPTIONAL{?com game:logo ?logo}\r\n"
+    			+ "			FILTER(STR(?company) = \""+ company+"\")"
+    			+ "} \r\n";
+ 
+    	String query_text2 = prefix+
+    			"SELECT (COUNT(?games) as ?totalGames)\r\n"
+    			+ "WHERE{ \r\n"
+    			+ "		?com a game:publisher; \r\n"
+    			+ "		      game:name ?company; \r\n"
+    			+ "		      game:"+rdfProperty+" ?games.\r\n"
+    			+ "		FILTER(STR(?company) = \""+ company+"\")\r\n"
+    			+ "} \r\n";
+    	
+    	System.out.println(query_text1);
+    	Query query1 = QueryFactory.create(query_text1);
+    	QueryExecution qexec1 = QueryExecutionFactory.create( query1, m );
+    	
+    	
+    	ArrayList<String> details = new ArrayList<String>();
+    	
+    	try {
+    		
+    		ResultSet results = qexec1.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+    			
+    			String[] list1 = {qs.get("company").toString(),get_if_exists(qs,"country"), get_if_exists(qs,"foundingDate"), 
+    					get_if_exists(qs,"website"), get_if_exists(qs,"logo")};
+                
+                details.addAll(Arrays.asList(list1));
+                System.out.println(qs.get("company").toString());
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec1.close();
+    	}
+    	
+    	System.out.println(query_text2);
+    	Query query2 = QueryFactory.create(query_text2);
+    	QueryExecution qexec2 = QueryExecutionFactory.create( query2, m );
+    	
+    	try {
+    		
+    		ResultSet results = qexec2.execSelect();
+    		while ( results.hasNext() ) {
+    			QuerySolution qs = results.next();
+    			
+    			String[] list2 = {qs.get("totalGames").toString()};
+                
+                details.addAll(4,Arrays.asList(list2));
+                System.out.println(qs.get("totalGames").toString());
+    		}
+    	}
+    	catch(NullPointerException e) {
+    		
+    	}
+    	finally {
+    		qexec1.close();
+    	} 
+
+        String[] detail = details.stream().toArray(String[]::new);
+    	return detail;
+	}
+
+
 
 }
+
+
