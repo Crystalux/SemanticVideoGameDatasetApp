@@ -212,15 +212,24 @@ public class Queries {
     	String query_text1=  prefix +
     			"SELECT ?title \r\n"  
     			+ "(GROUP_CONCAT(DISTINCT(?platform); SEPARATOR=', ') AS ?platforms) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?release_date); SEPARATOR=', ') AS ?release_dates) \r\n"
+    			
+    			+ "(GROUP_CONCAT(DISTINCT(?publisher); SEPARATOR=', ') AS ?publishers) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?developer); SEPARATOR=', ') AS ?developers) \r\n"
     			+ "(GROUP_CONCAT(DISTINCT(?ageRate); SEPARATOR=', ') AS ?ageRating) \r\n"
     			+ "(GROUP_CONCAT(DISTINCT(?genre); SEPARATOR=', ') AS ?genres) \r\n"
     			+ "(GROUP_CONCAT(DISTINCT(?theme); SEPARATOR=', ') AS ?themes) \r\n"
     			+ "(GROUP_CONCAT(DISTINCT(?gmode); SEPARATOR=', ') AS ?gameModes) \r\n"
     			+ "(GROUP_CONCAT(DISTINCT(?ppers); SEPARATOR=', ') AS ?playerPerspectives) \r\n"
+    			+ "(GROUP_CONCAT(DISTINCT(?cover); SEPARATOR=', ') AS ?covers) \r\n"
     	    	+ "WHERE { \r\n"
     	    	+"	?game a game:video_game. \r\n"
     	    	+"	?game game:title ?title. \r\n"
     	    	+ platform
+    	    	+ release_date
+    	    	+ publisher
+    	    	+ developer
+    	    	+ cover
     	    	+ ageRating
     	    	+ genres
     	    	+ themes
@@ -229,18 +238,6 @@ public class Queries {
     	    	+ filter
     	    	+"} \r\n"
     	    	+"GROUP BY ?title";
-    	String query_text2=  prefix +
-    			"SELECT ?title ?release_date ?publisher ?developer ?cover \r\n"
-    	    	+ "WHERE { \r\n"
-    	    	+"	?game a game:video_game. \r\n"
-    	    	+"	?game game:title ?title. \r\n"
-    	    	+ release_date
-    	    	+ publisher
-    	    	+ developer
-    	    	+ cover
-    	    	+ filter
-    	    	+"} \r\n";
-    	
     	
     	ArrayList<String> games = new ArrayList<String>();
     	System.out.println(query_text1);
@@ -257,8 +254,9 @@ public class Queries {
     	      while ( results.hasNext() ) {
     	           QuerySolution qs = results.next();
     	           
-                   String[] list1 = {qs.get("title").toString(),get_if_exists(qs,"platforms"), get_if_exists(qs,"ageRating"), get_if_exists(qs,"genres"), 
-                		   get_if_exists(qs,"themes"), get_if_exists(qs,"gameModes"),get_if_exists(qs,"playerPerspectives")};
+                   String[] list1 = {qs.get("title").toString(),get_if_exists(qs,"release_dates"), get_if_exists(qs,"publishers"), get_if_exists(qs,"developers"),
+                		   get_if_exists(qs,"platforms"), get_if_exists(qs,"ageRating"), get_if_exists(qs,"genres"), 
+                		   get_if_exists(qs,"themes"), get_if_exists(qs,"gameModes"),get_if_exists(qs,"playerPerspectives"), get_if_exists(qs,"covers")};
                    
                    games.addAll(Arrays.asList(list1));
                    System.out.println(qs.get("title").toString());
@@ -271,33 +269,9 @@ public class Queries {
     	finally {
                qexec1.close();
         }
-
-    	System.out.println(query_text2);
-    	Query query2 = QueryFactory.create( query_text2);
-    	QueryExecution qexec2 = QueryExecutionFactory.create( query2, m );
-    	
-        try {
-  	      ResultSet results = qexec2.execSelect();
-  	      while ( results.hasNext() ) {
-  	           QuerySolution qs = results.next();
-  	           String[] list2 = {qs.get("title").toString(),get_if_exists(qs,"release_date"), get_if_exists(qs,"publisher"), get_if_exists(qs,"developer"), get_if_exists(qs,"cover")};
-  	           String[] slice1 = Arrays.copyOfRange(list2, 1,4);
-  	           String[] slice2 = Arrays.copyOfRange(list2, 4,5);
-  	           games.addAll(1, Arrays.asList(slice1));
-  	           games.addAll(Arrays.asList(slice2));
-
-               System.out.println(qs.get("cover").toString());
-  	       }
-  	          
-        }
-        catch(NullPointerException e) {
-  	        	
-        }
-        finally {
-             qexec2.close();
-        }
         
         String[] game = games.stream().toArray(String[]::new);
+        System.out.print(game.toString());
     	return game;
     	        
     }

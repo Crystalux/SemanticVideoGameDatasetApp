@@ -69,7 +69,7 @@ public class GUI extends JFrame {
 	 * Create the application.
 	 */
 	public GUI() {
-		setTitle("A Semantic Video Game Database");
+		setTitle("A Semantic Video Game Knowledgebase");
 		
 		setResizable(true);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -206,23 +206,23 @@ public class GUI extends JFrame {
 		search_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				BuildQuery buildQuery = new BuildQuery();
-				buildQuery.selected_genre = genre_dd.getSelectedItem().toString();
-				buildQuery.selected_theme = theme_dd.getSelectedItem().toString();
-				buildQuery.selected_ppers = ppers_dd.getSelectedItem().toString();
-				buildQuery.selected_gmode = gmode_dd.getSelectedItem().toString();
-				buildQuery.selected_sort = selectSort.getSelectedItem().toString();
-				buildQuery.developer ="";
-				buildQuery.publisher="";
-				buildQuery.pageNo=0;
+				QueryParams queryParams = new QueryParams();
+				queryParams.selected_genre = genre_dd.getSelectedItem().toString();
+				queryParams.selected_theme = theme_dd.getSelectedItem().toString();
+				queryParams.selected_ppers = ppers_dd.getSelectedItem().toString();
+				queryParams.selected_gmode = gmode_dd.getSelectedItem().toString();
+				queryParams.selected_sort = selectSort.getSelectedItem().toString();
+				queryParams.developer ="";
+				queryParams.publisher="";
+				queryParams.pageNo=0;
 				
-				gamesPanel.buildQuery = buildQuery;
+				gamesPanel.queryParams = queryParams;
 				
-				int count  = queries.count_qGames(buildQuery.selected_genre, buildQuery.selected_theme, buildQuery.selected_ppers, buildQuery.selected_gmode);
+				int count  = queries.count_qGames(queryParams.selected_genre, queryParams.selected_theme, queryParams.selected_ppers, queryParams.selected_gmode);
 				countPanel.removeAll();
 				JLabel countLabel = new JLabel(count + " games found");
 				countPanel.add(countLabel);
-				buildQuery.lastPage = Math.floorDiv(count -1, 12);
+				queryParams.lastPage = Math.floorDiv(count -1, 12);
 				gamesPanel.updateGames();
 				
 			}
@@ -419,24 +419,24 @@ public class GUI extends JFrame {
 								GamesPanel gamesPanel = new GamesPanel(queries, gameInfo);
 								gamePanel.add(sortPanel, BorderLayout.NORTH);
 								gamePanel.add(gamesPanel, BorderLayout.CENTER);
-								///new BuildQuery
-								BuildQuery buildQuery = new BuildQuery();
-								buildQuery.selected_genre = "-- Select genre --";
-								buildQuery.selected_theme = "-- Select theme --";
-								buildQuery.selected_ppers = "-- Select player perspective --";
-								buildQuery.selected_gmode = "-- Select game mode --";
-								buildQuery.selected_sort = selectSort.getSelectedItem().toString();
-								buildQuery.developer = "";
-								buildQuery.publisher=publisherName;
-								buildQuery.pageNo=0;
+								///new QueryParams
+								QueryParams queryParams = new QueryParams();
+								queryParams.selected_genre = "-- Select genre --";
+								queryParams.selected_theme = "-- Select theme --";
+								queryParams.selected_ppers = "-- Select player perspective --";
+								queryParams.selected_gmode = "-- Select game mode --";
+								queryParams.selected_sort = selectSort.getSelectedItem().toString();
+								queryParams.developer = "";
+								queryParams.publisher=publisherName;
+								queryParams.pageNo=0;
 
-								gamesPanel.buildQuery = buildQuery;
+								gamesPanel.queryParams = queryParams;
 								
 								int count  = Integer.parseInt(details[4]);
 								countPanel.removeAll();
 								JLabel countLabel = new JLabel(count + " games found");
 								countPanel.add(countLabel);
-								buildQuery.lastPage = Math.floorDiv(count -1, 12);
+								queryParams.lastPage = Math.floorDiv(count -1, 12);
 								gamesPanel.updateGames();
 								
 								///update game
@@ -618,24 +618,24 @@ public class GUI extends JFrame {
 								GamesPanel gamesPanel = new GamesPanel(queries, gameInfo);
 								gamePanel.add(sortPanel, BorderLayout.NORTH);
 								gamePanel.add(gamesPanel, BorderLayout.CENTER);
-								///new BuildQuery
-								BuildQuery buildQuery = new BuildQuery();
-								buildQuery.selected_genre = "-- Select genre --";
-								buildQuery.selected_theme = "-- Select theme --";
-								buildQuery.selected_ppers = "-- Select player perspective --";
-								buildQuery.selected_gmode = "-- Select game mode --";
-								buildQuery.selected_sort = selectSort.getSelectedItem().toString();
-								buildQuery.developer = developerName;
-								buildQuery.publisher="";
-								buildQuery.pageNo=0;
+								///new QueryParams
+								QueryParams queryParams = new QueryParams();
+								queryParams.selected_genre = "-- Select genre --";
+								queryParams.selected_theme = "-- Select theme --";
+								queryParams.selected_ppers = "-- Select player perspective --";
+								queryParams.selected_gmode = "-- Select game mode --";
+								queryParams.selected_sort = selectSort.getSelectedItem().toString();
+								queryParams.developer = developerName;
+								queryParams.publisher="";
+								queryParams.pageNo=0;
 
-								gamesPanel.buildQuery = buildQuery;
+								gamesPanel.queryParams = queryParams;
 								
 								int count  = Integer.parseInt(details[4]);
 								countPanel.removeAll();
 								JLabel countLabel = new JLabel(count + " games found");
 								countPanel.add(countLabel);
-								buildQuery.lastPage = Math.floorDiv(count -1, 12);
+								queryParams.lastPage = Math.floorDiv(count -1, 12);
 								gamesPanel.updateGames();
 								
 								///update game

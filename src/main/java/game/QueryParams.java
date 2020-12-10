@@ -1,6 +1,6 @@
 package game;
 
-public class BuildQuery {
+public class QueryParams {
 	public String selected_genre;
 	public String selected_theme;
 	public String selected_ppers;

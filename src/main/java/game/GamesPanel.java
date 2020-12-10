@@ -26,7 +26,7 @@ import javax.swing.JScrollPane;
 public class GamesPanel extends JPanel {
 	
 	Queries queries;
-	BuildQuery buildQuery = new BuildQuery();
+	QueryParams queryParams = new QueryParams();
 	JPanel bodyPanel = new JPanel();
 	JPanel footerPanel = new JPanel();
 	
@@ -144,8 +144,8 @@ public class GamesPanel extends JPanel {
 		JButton first = new JButton("First");
 		first.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(buildQuery.pageNo != 0) {
-					buildQuery.pageNo = 0;
+				if(queryParams.pageNo != 0) {
+					queryParams.pageNo = 0;
 					updateGames();
 				}
 			}
@@ -154,8 +154,8 @@ public class GamesPanel extends JPanel {
 		JButton prev = new JButton("Prev");
 		prev.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (buildQuery.pageNo > 0) {
-					buildQuery.pageNo -=1;
+				if (queryParams.pageNo > 0) {
+					queryParams.pageNo -=1;
 					updateGames();
 
 				}
@@ -165,8 +165,8 @@ public class GamesPanel extends JPanel {
 		JButton next = new JButton("Next");
 		next.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(buildQuery.pageNo<buildQuery.lastPage) {
-					buildQuery.pageNo +=1;
+				if(queryParams.pageNo<queryParams.lastPage) {
+					queryParams.pageNo +=1;
 					updateGames();
 				}
 			}
@@ -175,8 +175,8 @@ public class GamesPanel extends JPanel {
 		JButton last = new JButton("Last");
 		last.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(buildQuery.pageNo != buildQuery.lastPage) {
-					buildQuery.pageNo = buildQuery.lastPage;
+				if(queryParams.pageNo != queryParams.lastPage) {
+					queryParams.pageNo = queryParams.lastPage;
 					updateGames();
 				}
 			}
@@ -194,15 +194,15 @@ public class GamesPanel extends JPanel {
 	}
 	
 	public void updateGames() {
-   		List<String[]> games = queries.get_qgames(buildQuery.selected_genre, buildQuery.selected_theme, buildQuery.selected_ppers, 
-   				buildQuery.selected_gmode, buildQuery.publisher, buildQuery.developer, buildQuery.pageNo, buildQuery.selected_sort);
+   		List<String[]> games = queries.get_qgames(queryParams.selected_genre, queryParams.selected_theme, queryParams.selected_ppers, 
+   				queryParams.selected_gmode, queryParams.publisher, queryParams.developer, queryParams.pageNo, queryParams.selected_sort);
    		System.out.println(games.size() + " games in games");
    		JScrollPane gamePane = gridGames(games);
    		bodyPanel.removeAll();
    		bodyPanel.add(gamePane);
    		
    		footerPanel.removeAll();
-   		footerPanel.add(pagePanel(buildQuery.pageNo));
+   		footerPanel.add(pagePanel(queryParams.pageNo));
    		
    		bodyPanel.revalidate();
    		footerPanel.revalidate();
